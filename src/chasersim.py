@@ -66,15 +66,18 @@ class ChaserSim:
 
         particles, edges = self.create_chasers()
 
-        position_data = []
-        velocity_data = []
+        position_data     = []
+        velocity_data     = []
+        acceleration_data = []
 
         for _ in range(self.steps):
-            step_position = []
-            step_velocity = []
+            step_position     = []
+            step_velocity     = []
+            step_acceleration = []
             for p in particles:
                 step_position.append(p.position.copy())
                 step_velocity.append(p.velocity.copy())
+                step_acceleration.append(p.acceleration.copy())
 
                 p.decide()
 
@@ -83,5 +86,7 @@ class ChaserSim:
 
             position_data.append(step_position)
             velocity_data.append(step_velocity)
+            acceleration_data.append(step_acceleration)
 
-        return position_data, velocity_data, edges
+
+        return position_data, velocity_data, acceleration_data, edges

@@ -1,5 +1,5 @@
 data/
 src/__pycache__
-agents/__pycache__
-misc/__pycache__
-environment/__pycache__
+src/agents/__pycache__
+src/misc/__pycache__
+src/environment/__pycache__

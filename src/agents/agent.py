@@ -28,16 +28,6 @@ class Agent(Particle):
         return self.distance(other) < self.vision_radius
         # TODO: implement cone based vision
 
-    def inViewAgentsStates(self):
-        # for other_agent in self.neighbors:
-        #     position_agent, velocity_agent, acceleration_agent =
-        #                 self.transformToMyView(other_agent.)
-        pass
-
-
-    def transformToMyView(self):
-        pass
-
     def observe(self):
         """Observe the population and take note of neighbors."""
         self.neighbors = [other for other in environment.population

@@ -5,9 +5,10 @@ import multiprocessing
 
 def run_simulation(simulation_object, instances, processes=1, batch=100, silent=False):
     pool = multiprocessing.Pool(processes=processes)
-    position_data_all = []
-    velocity_data_all = []
-    edge_data_all = []
+    position_data_all     = []
+    velocity_data_all     = []
+    edge_data_all         = []
+    acceleration_data_all = []
 
     remaining_instances = instances
 
@@ -16,7 +17,7 @@ def run_simulation(simulation_object, instances, processes=1, batch=100, silent=
         n = min(remaining_instances, batch)
         data_pool = pool.map(simulation_object.simulation, range(n))
 
-        position_pool, velocity_pool, edge_pool = zip(*data_pool)
+        position_pool, velocity_pool, acceleration_pool, edge_pool = zip(*data_pool)
 
         remaining_instances -= n
         if not silent:
@@ -26,6 +27,7 @@ def run_simulation(simulation_object, instances, processes=1, batch=100, silent=
 
         position_data_all.extend(position_pool)
         velocity_data_all.extend(velocity_pool)
+        acceleration_data_all.extend(acceleration_pool)
         edge_data_all.extend(edge_pool)
 
-    return position_data_all, velocity_data_all, edge_data_all
+    return position_data_all, velocity_data_all, acceleration_data_all, edge_data_all

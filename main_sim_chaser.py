@@ -11,14 +11,16 @@ def main():
         os.makedirs(ARGS.save_dir)
 
     chaser_sim = ChaserSim(ARGS.num_particles, ARGS.num_targets,ARGS.steps,ARGS.dt)
-    position_data_all, velocity_data_all, edge_data_all = utils.run_simulation(
-                                                                            chaser_sim,
-                                                                            ARGS.instances,
-                                                                            ARGS.processes,
-                                                                            ARGS.batch_size)
+    data_all = utils.run_simulation(chaser_sim, ARGS.instances, ARGS.processes,
+                                    ARGS.batch_size)
+    position_data_all     = data_all[0]
+    velocity_data_all     = data_all[1]
+    acceleration_data_all = data_all[2]
+    edge_data_all         = data_all[3]
 
     np.save(os.path.join(ARGS.save_dir, ARGS.prefix+'_position.npy'), position_data_all)
     np.save(os.path.join(ARGS.save_dir, ARGS.prefix+'_velocity.npy'), velocity_data_all)
+    np.save(os.path.join(ARGS.save_dir, ARGS.prefix+'_acceleration.npy'), acceleration_data_all)
     np.save(os.path.join(ARGS.save_dir, ARGS.prefix+'_edge.npy'), edge_data_all)
 
 
