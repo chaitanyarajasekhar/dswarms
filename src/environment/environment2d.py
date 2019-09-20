@@ -8,15 +8,18 @@ from .obstacles import Obstacle, Sphere, Wall
 class Environment2D:
     """Environment that contains the population of boids, goals and obstacles."""
 
-    def __init__(self, boundary):
+    def __init__(self, boundary=None):
         self.population = []
         self.goals = []
 
-        xmin, xmax, ymin, ymax = boundary
-        self.obstacles = [Wall((1, 0), (xmin, 0), ndim=2),
-                          Wall((-1, 0), (xmax, 0), ndim=2),
-                          Wall((0, 1), (0, ymin), ndim=2),
-                          Wall((0, -1), (0, ymax), ndim=2)]
+        if boundary is None:
+            self.obstacles = []
+        else:
+            xmin, xmax, ymin, ymax = boundary
+            self.obstacles = [Wall((1, 0), (xmin, 0), ndim=2),
+                            Wall((-1, 0), (xmax, 0), ndim=2),
+                            Wall((0, 1), (0, ymin), ndim=2),
+                            Wall((0, -1), (0, ymax), ndim=2)]
 
     def add_agent(self, agent):
         if not isinstance(agent, Agent):
