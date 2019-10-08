@@ -1,0 +1,20 @@
+{
+  "save_dir"         : "data/dchaser_5_1_15",
+  "n_chaser"         : 5,
+  "n_chaser_targets" : 1,
+  "instances"        : 100,
+  "steps"            : 50,
+  "dt"               : 0.3,
+  "prefix"           : "test",
+  "save_edges"       : true,
+  "processes"        : 8,
+  "batch_size"       : 128,
+  "ego_view"         : true,
+  "vision_radius"    : 15,
+  "vision_angle"     : 0,
+  "n_dim"            : 2,
+  "max_speed"        : 10,
+  "max_acceleration" : 10,
+  "padding_size"     : 5,
+  "agent_size"       : 0
+}

@@ -4,12 +4,15 @@ from src.agents import DChaserAgent
 from src.environment import DEnvironment2D
 
 class DChaserSim:
-    def __init__(self,num_agents,num_targets,steps,dt,prefix=None):
-        self.num_targets = num_targets
-        self.num_agents  = num_agents
-        self.dt          = dt
-        self.steps       = steps
-        self.prefix      = True if prefix == 'test' else False
+    def __init__(self,params):
+
+        self.num_targets = params['n_chaser_targets']
+        self.num_agents  = params['n_chaser']
+        self.dt          = params['dt']
+        self.steps       = params['steps']
+        self.test        = True if params['prefix'] == 'test' else False
+        self.params      = params
+        # TODO: use test later
 
     def createChasers(self):
         """
@@ -28,13 +31,14 @@ class DChaserSim:
 
         prev = None
         particles = []
-        for _ in range(self.num_agents):
+        for p_id in range(self.num_agents):
             r = 20
             theta = np.random.rand() * 2 * np.pi
             x, y = r * np.cos(theta), r * np.sin(theta)
             v = np.random.uniform(-2, 2, 2)
 
-            particles.append(DChaserAgent((x, y), v, ndim=2, max_speed=10, max_acceleration=10))
+            particles.append(DChaserAgent(position =(x, y), agent_id = p_id,
+                            params = self.params, velocity = v))
 
         edges = np.zeros((self.num_agents, self.num_agents))
         particle_idxs = np.arange(self.num_agents)

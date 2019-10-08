@@ -42,7 +42,7 @@ class DEnvironment2D(Environment2D):
             data = agent.inViewData()
             position_data     = data[0]
             velocity_data     = data[1]
-            previous_step_data[0].append(np.concatenate((position_data,velocity_data)))
+            previous_step_data[0].append(np.concatenate((position_data,velocity_data),axis=1))
             # not using acceleration data
             # acceleration_data = data[2]
             previous_step_data[1].append(data[4]) # counter i.e. agents in view
@@ -56,8 +56,9 @@ class DEnvironment2D(Environment2D):
             agent.move(dt)
 
         for agent in self.population:
-            current_step_data[0].append(np.concatenate((agent.position.copy(),
-                                                agent.velocity.copy())))
-            current_step_data[1].append(agent.acceleration.copy())
+            pos,vel,acc = agent.transformToView2D(agent.position.copy(),
+                                agent.velocity.copy(),agent.acceleration.copy())
+            current_step_data[0].append(np.concatenate((pos,vel)))
+            current_step_data[1].append(acc)
 
         return previous_step_data, current_step_data

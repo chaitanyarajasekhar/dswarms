@@ -3,13 +3,10 @@ from src.agents.dagent import DAgent, ObjectType
 
 
 class DChaserAgent(DAgent):
-    def __init__(self, position, agent_id, velocity=None, acceleration=None,
-                ndim=None, max_speed=None, max_acceleration=None,
-                size=None, vision_radius=None, vision_angle = None,
+    def __init__(self, position, agent_id,params, velocity=None, acceleration=None,
                 agent_type = ObjectType.CHASER):
         '''Decentralized Chaser Agent'''
-        super().__init__(position, agent_id, velocity, acceleration, ndim,
-                    max_speed, max_acceleration,size, vision_radius, vision_angle,
+        super().__init__(position, agent_id, params, velocity, acceleration,
                     agent_type)
 
     #     self._targets = []

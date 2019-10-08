@@ -10,10 +10,8 @@ class ObjectType(Enum):
     VICSEK   = 4
 
 class DAgent(Particle):
-    def __init__(self, position, agent_id,velocity=None, acceleration=None,
-                ndim=None, max_speed=None, max_acceleration=None,
-                size=None, vision_radius=None, vision_angle = None,agent_type=None,
-                padding_size = 50):
+    def __init__(self, position, agent_id, params, velocity=None, acceleration=None,
+                agent_type=None):
         """
         Create a boid with essential attributes.
         `ndim`: dimension of the space it resides in.
@@ -23,13 +21,16 @@ class DAgent(Particle):
         `max_speed`: max speed the agent can achieve.
         `max_acceleratoin`: max acceleration the agent can achieve.
         """
-        super().__init__(position, velocity, acceleration, ndim, max_speed, max_acceleration)
+        super().__init__(position, velocity, acceleration, params['n_dim'],
+                    params['max_speed'],params['max_acceleration'])
         # it is assumed that id given is unique
-        self.agent_id      = id
+        self.agent_id      = agent_id
         self.agent_type    = agent_type
-        self.size          = float(size) if size else 0.
-        self.vision_radius = float(vision_radius) if vision_radius else np.inf
-        self.vision_angle  = float(vision_angle) if vision_angle else np.pi
+        self.size          = float(params['agent_size']) if params['agent_size'] !=0 else 0.
+        self.vision_radius = float(params['vision_radius']) if params['vision_radius'] != 0 else np.inf
+        self.vision_angle  = float(params['vision_angle']) if params['vision_angle'] != 0 else np.pi
+        self.ego_view      = params['ego_view']
+        self.padding_size  = params['padding_size']
 
         self.neighbors = []
         self.obstacles = []
@@ -39,7 +40,6 @@ class DAgent(Particle):
         # self.n_goals      = None
         # self.n_agents     = None
         # self.n_obstacles  = None
-        self.padding_size = padding_size
 
     @property
     def targets(self):
@@ -68,6 +68,7 @@ class DAgent(Particle):
     def inViewData(self):
         ''' Return the state and edge information of other objects in view w.r.t to
         current agent '''
+        self.computeRotationTransformation()
         # NOTE: only implemented for 2d data
         position_data     = np.zeros((self.padding_size,2))
         velocity_data     = np.zeros((self.padding_size,2))
@@ -75,9 +76,15 @@ class DAgent(Particle):
         edge_data         = np.zeros((self.padding_size-1))
 
         counter = 0
-        position_data[counter,:]     =  np.zeros(2)
-        velocity_data[counter,:]     =  np.zeros(2)
-        acceleration_data[counter,:] =  np.zeros(2)
+        if self.ego_view == True:
+            position_data[counter,:]     =  np.zeros(2)
+            velocity_data[counter,1]     =  np.linalg.norm(self.velocity)
+            acceleration_data[counter,:] =  np.matmul(self.rotation_matrix, self.acceleration)
+        else:
+            position_data[counter,:]     =  self.position.copy()
+            velocity_data[counter,:]     =  self.velocity.copy()
+            acceleration_data[counter,:] =  self.acceleration.copy()
+
         counter += 1
 
         for goal in self.goals:
@@ -86,7 +93,7 @@ class DAgent(Particle):
             position_data[counter,:]     =  t_position
             velocity_data[counter,:]     =  t_velocity
             acceleration_data[counter,:] =  t_acceleration
-            edge_data[counter]           =  self.edgeType(self.agent_type,ObjectType.GOAL)
+            edge_data[counter-1]           =  self.edgeType(self.agent_type,ObjectType.GOAL)
             counter += 1
 
         for obstacle in self.obstacles:
@@ -95,7 +102,7 @@ class DAgent(Particle):
             position_data[counter,:]     =  t_position
             velocity_data[counter,:]     =  t_velocity
             acceleration_data[counter,:] =  t_acceleration
-            edge_data[counter]           =  self.edgeType(self.agent_type,ObjectType.OBSTACLE)
+            edge_data[counter-1]           =  self.edgeType(self.agent_type,ObjectType.OBSTACLE)
             counter += 1
 
         for agent in self.neighbors:
@@ -108,9 +115,9 @@ class DAgent(Particle):
             if ((agent.agent_type ==  ObjectType.CHASER)
                                 and (self.agent_type == ObjectType.CHASER)):
                 if self.isTarget(agent):
-                    edge_data[counter]   =  self.edgeType(self.agent_type,ObjectType.CHASER)
+                    edge_data[counter-1]   =  self.edgeType(self.agent_type,ObjectType.CHASER)
             else:
-                edge_data[counter]       =  self.edgeType(self.agent_type,self.agent.agent_type)
+                edge_data[counter-1]       =  self.edgeType(self.agent_type,self.agent.agent_type)
             counter += 1
 
         return position_data, velocity_data, acceleration_data, edge_data, counter
@@ -125,27 +132,34 @@ class DAgent(Particle):
 
         return edge_type[object_type_source.value,object_type_target.value]
 
+    def computeRotationTransformation(self):
+
+        if np.linalg.norm(self.velocity) > 0.001:
+            theta_unit_vector =  self.velocity/np.linalg.norm(self.velocity)
+            self.theta             =  np.arccos(theta_unit_vector[0]) * \
+                                            np.sign(theta_unit_vector[1])
+        else:
+            self.theta             = 0.
+
+
+        self.rotation_matrix       = np.array([[np.cos(self.theta), -np.sin(self.theta)],
+                                            [np.sin(self.theta), np.cos(self.theta)]])
+        self.transformation_matrix = np.array([[np.sin(self.theta),np.cos(self.theta)],
+                                            [np.cos(self.theta),-np.sin(self.theta)]])
+        self.prev_position         = self.position.copy()
+
     # NOTE: only works with 2d environments
     def transformToView2D(self,position,velocity,acceleration):
         ''' transforms the other agents state info w.r.t. current agents view '''
-        # always y-axis is denoted by the heading direction
-        if np.linalg.norm(self.velocity) > 0.001:
-            theta_unit_vector =  self.velocity/np.linalg.norm(self.velocity)
-            theta             =  np.arccos(theta_unit_vector[0]) * \
-                                            np.sign(theta_unit_vector[1])
+        if self.ego_view == True:
+            # always y-axis is denoted by the heading direction
+            t_position     = np.matmul(self.transformation_matrix, position - self.prev_position)
+            t_velocity     = np.matmul(self.rotation_matrix, velocity)# - self.velocity)
+            t_acceleration = np.matmul(self.rotation_matrix, acceleration)# - self.acceleration)
+            return t_position, t_velocity, t_acceleration
+
         else:
-            theta             = 0.
-
-
-        rotation_matrix       = np.array([[np.cos(theta), -np.sin(theta)],
-                                            [np.sin(theta), np.cos(theta)]])
-        transformation_matrix = np.array([[np.sin(theta),np.cos(theta)],
-                                            [np.cos(theta),-np.sin(theta)]])
-        t_position     = np.matmul(transformation_matrix, position - self.position)
-        t_velocity     = np.matmul(rotation_matrix, velocity - self.velocity)
-        t_acceleration = np.matmul(rotation_matrix, acceleration - self.acceleration)
-
-        return t_position, t_velocity, t_acceleration
+            return position, velocity, acceleration
 
     def observe(self,environment):
         """Observe the population and take note of neighbors."""
